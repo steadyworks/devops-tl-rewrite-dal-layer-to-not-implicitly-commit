@@ -1,0 +1,39 @@
+from fastapi.responses import JSONResponse
+
+from backend.route_handler.base import RouteHandler
+
+
+class DebugHandler(RouteHandler):
+    def register_routes(self) -> None:
+        self.router.add_api_route("/api/debug", self.debug, methods=["GET"])
+        self.router.add_api_route(
+            "/api/debug/sentry-debug",
+            self.sentry_debug,
+            methods=["GET"],
+        )
+        self.router.add_api_route(
+            "/api/debug/test-enqueue-jobs",
+            self.test_enqueue_jobs,
+            methods=["GET"],
+        )
+        self.router.add_api_route(
+            "/api/debug/test-get-job-status/{job_id}",
+            self.test_get_job_status,
+            methods=["GET"],
+        )
+
+    async def debug(self) -> JSONResponse:
+        return JSONResponse({"hello": "world"})
+
+    async def sentry_debug(self) -> JSONResponse:
+        _division_by_zero = 1 / 0
+        return JSONResponse("")
+
+    async def test_enqueue_jobs(self) -> JSONResponse:
+        await self.app.job_manager.enqueue("test123", ["a.png", "b.png"])
+        status = await self.app.job_manager.get_status("test123")
+        return JSONResponse(status)
+
+    async def test_get_job_status(self, job_id: str) -> JSONResponse:
+        status = await self.app.job_manager.get_status(job_id)
+        return JSONResponse(status)
